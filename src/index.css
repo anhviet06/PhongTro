@@ -1,0 +1,113 @@
+@import 'tailwindcss';
+@config '../tailwind.config.ts';
+
+:root {
+   --primary: #005bbf;
+   --on-primary: #ffffff;
+   --primary-container: #1a73e8;
+   --on-primary-container: #ffffff;
+   --secondary: #006e2c;
+   --secondary-container: #86f898;
+   --tertiary: #b81d17;
+   --tertiary-container: #dc392c;
+   --error: #ba1a1a;
+   --error-container: #ffdad6;
+   --surface: #f7f9ff;
+   --on-surface: #181c20;
+   --surface-container-lowest: #ffffff;
+   --surface-container-low: #f1f4fa;
+   --surface-container: #ebeef4;
+   --surface-container-high: #e5e8ee;
+   --surface-container-highest: #dfe3e8;
+   --on-surface-variant: #414754;
+   --outline: #727785;
+   --outline-variant: #c1c6d6;
+}
+
+html,
+body,
+#root {
+   height: 100%;
+   margin: 0;
+}
+
+body {
+   min-width: 320px;
+   background: var(--surface);
+   color: var(--on-surface);
+   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+   font-size: 14px;
+   line-height: 20px;
+}
+
+button,
+input,
+select,
+textarea {
+   font: inherit;
+}
+
+button {
+   cursor: pointer;
+}
+
+button:disabled {
+   cursor: not-allowed;
+   opacity: 0.6;
+}
+
+::selection {
+   background: #adc7ff;
+}
+
+::-webkit-scrollbar {
+   width: 10px;
+   height: 10px;
+}
+
+::-webkit-scrollbar-track {
+   background: var(--surface-container-low);
+}
+
+::-webkit-scrollbar-thumb {
+   background: var(--outline-variant);
+   border: 2px solid var(--surface-container-low);
+   border-radius: 9999px;
+}
+
+@keyframes fade-in {
+   from {
+      opacity: 0;
+   }
+   to {
+      opacity: 1;
+   }
+}
+
+@keyframes slide-over-in {
+   from {
+      opacity: 0;
+      transform: translateX(24px);
+   }
+   to {
+      opacity: 1;
+      transform: translateX(0);
+   }
+}
+
+.animate-fade-in {
+   animation: fade-in 160ms ease-out;
+}
+
+.animate-slide-over {
+   animation: slide-over-in 180ms ease-out;
+}
+
+.focus-ring {
+   outline: 2px solid transparent;
+   outline-offset: 2px;
+}
+
+.focus-ring:focus-visible {
+   outline-color: var(--primary);
+}

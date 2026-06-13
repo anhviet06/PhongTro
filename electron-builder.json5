@@ -1,0 +1,55 @@
+{
+   // Single source of truth cho electron-builder. KHÔNG dùng block `build` trong package.json
+   // (electron-builder ưu tiên file `.json5` này → block `build` sẽ bị bỏ qua).
+   $schema: 'https://raw.githubusercontent.com',
+   appId: 'com.phongtro.app',
+   asar: true,
+   productName: 'PhongTroApp',
+   directories: {
+      output: 'release/${version}',
+   },
+   files: ['dist', 'dist-electron', 'migrations'],
+   // Publish config cho electron-updater + auto-update qua GitHub Releases.
+   publish: [
+      {
+         provider: 'github',
+         owner: 'anhviet06',
+         repo: 'PhongTro',
+      },
+   ],
+   afterPack: './removeLocales.cjs',
+   mac: {
+      target: ['dmg'],
+      artifactName: '${productName}-Mac-${version}-Installer.${ext}',
+   },
+   win: {
+      target: [
+         {
+            target: 'nsis',
+            arch: ['x64'],
+         },
+      ],
+      icon: 'public/phong.png',
+      artifactName: '${productName}-Windows-${version}-Setup.${ext}',
+   },
+   nsis: {
+      oneClick: false,
+      perMachine: false,
+      allowToChangeInstallationDirectory: true,
+      createDesktopShortcut: true,
+      shortcutName: 'PhongTroApp',
+      uninstallDisplayName: 'PhongTroApp',
+      deleteAppDataOnUninstall: false,
+      artifactName: '${productName}-Setup-${version}.${ext}',
+   },
+   linux: {
+      target: ['AppImage'],
+      artifactName: '${productName}-Linux-${version}.${ext}',
+   },
+   extraResources: [
+      {
+         from: 'migrations',
+         to: 'migrations',
+      },
+   ],
+}
