@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+   AlertTriangle,
    Building2,
    CheckCircle,
    Info,
@@ -16,6 +17,7 @@ import {
 import type { Area, Service, Settings as SettingsMap } from '../shared/types';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
+import MoneyInput from '../components/MoneyInput';
 import BackupSection from '../components/settings/BackupSection';
 import UpdateChecker from '../components/settings/UpdateChecker';
 
@@ -44,6 +46,30 @@ export default function Settings() {
    const [saving, setSaving] = useState(false);
    const [message, setMessage] = useState<string | null>(null);
    const [error, setError] = useState<string | null>(null);
+   const [resetOpen, setResetOpen] = useState(false);
+   const [resetPassword, setResetPassword] = useState('');
+   const [resetLoading, setResetLoading] = useState(false);
+
+   const performReset = async () => {
+      setResetLoading(true);
+      setError(null);
+      setMessage(null);
+      try {
+         const result = await window.api.backup.resetBusinessData(resetPassword);
+         if (result.success) {
+            setMessage(
+               `Đã reset dữ liệu thành công. Đã xoá: ${result.tablesCleared.join(', ')}`
+            );
+            setResetOpen(false);
+            setResetPassword('');
+            await loadData();
+         }
+      } catch (resetError) {
+         setError(resetError instanceof Error ? resetError.message : String(resetError));
+      } finally {
+         setResetLoading(false);
+      }
+   };
 
    const loadData = async () => {
       setLoading(true);
@@ -320,14 +346,10 @@ export default function Settings() {
                                  />
                               </td>
                               <td className="px-sm py-xs">
-                                 <input
-                                    type="number"
-                                    min={0}
+                                 <MoneyInput
                                     value={service.unit_price}
-                                    onChange={(event) =>
-                                       updateService(index, {
-                                          unit_price: Number(event.target.value) || 0,
-                                       })
+                                    onChange={(next) =>
+                                       updateService(index, { unit_price: next })
                                     }
                                     className="h-9 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-sm outline-none focus:border-primary"
                                  />
@@ -389,6 +411,88 @@ export default function Settings() {
                setMessage(null);
             }}
          />
+
+         {/* Danger zone — reset toàn bộ dữ liệu nghiệp vụ */}
+         <section className="rounded-lg border border-error/40 bg-error-container/30 p-md shadow-sm">
+            <div className="flex items-start gap-sm">
+               <AlertTriangle className="mt-xs h-5 w-5 shrink-0 text-error" />
+               <div className="flex-1">
+                  <h3 className="text-headline-sm text-on-error-container">Khu vực nguy hiểm</h3>
+                  <p className="mt-xs text-body-md text-on-error-container/80">
+                     Reset toàn bộ dữ liệu kinh doanh: khách thuê, xe máy, hợp đồng, hoá đơn, thanh
+                     toán, chỉ số điện nước. <strong>Giữ lại</strong> khu, phòng, giá phòng, đơn
+                     giá khu, danh sách dịch vụ và thông tin chủ trọ. Yêu cầu mật khẩu xác nhận.
+                  </p>
+                  <button
+                     type="button"
+                     onClick={() => setResetOpen(true)}
+                     className="focus-ring mt-md flex h-10 items-center gap-sm rounded-lg bg-error px-md font-semibold text-on-error hover:opacity-90"
+                  >
+                     <Trash2 className="h-4 w-4" />
+                     Reset dữ liệu khách thuê
+                  </button>
+               </div>
+            </div>
+         </section>
+
+         {/* Modal nhập password reset */}
+         {resetOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-md">
+               <div
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest p-lg shadow-xl"
+                  style={{ maxWidth: '480px' }}
+               >
+                  <div className="flex items-center gap-sm">
+                     <AlertTriangle className="h-6 w-6 text-error" />
+                     <h3 className="text-headline-sm text-on-surface">Xác nhận reset dữ liệu</h3>
+                  </div>
+                  <p className="mt-md text-body-md text-on-surface-variant">
+                     Thao tác này <strong>không thể hoàn tác</strong>. Tất cả khách thuê, hợp đồng,
+                     hoá đơn, thanh toán sẽ bị xoá vĩnh viễn. Khu, phòng và đơn giá được giữ
+                     nguyên.
+                  </p>
+                  <label className="mt-md block">
+                     <span className="text-label-sm text-on-surface-variant">
+                        Nhập mật khẩu để xác nhận
+                     </span>
+                     <input
+                        type="password"
+                        autoFocus
+                        value={resetPassword}
+                        onChange={(event) => setResetPassword(event.target.value)}
+                        onKeyDown={(event) => {
+                           if (event.key === 'Enter' && resetPassword && !resetLoading) {
+                              performReset();
+                           }
+                        }}
+                        placeholder="Nhập mật khẩu..."
+                        className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
+                     />
+                  </label>
+                  <div className="mt-lg flex justify-end gap-sm">
+                     <button
+                        type="button"
+                        onClick={() => {
+                           setResetOpen(false);
+                           setResetPassword('');
+                        }}
+                        disabled={resetLoading}
+                        className="h-10 rounded-lg border border-outline-variant px-md text-on-surface hover:bg-surface-container-high"
+                     >
+                        Huỷ
+                     </button>
+                     <button
+                        type="button"
+                        onClick={performReset}
+                        disabled={!resetPassword || resetLoading}
+                        className="h-10 rounded-lg bg-error px-md font-semibold text-on-error hover:opacity-90 disabled:opacity-50"
+                     >
+                        {resetLoading ? 'Đang xoá...' : 'Xác nhận xoá'}
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
 
          <UpdateChecker />
 
@@ -467,11 +571,9 @@ function NumberInput({
    return (
       <label className="block">
          <span className="text-label-sm text-on-surface-variant">{label}</span>
-         <input
-            type="number"
-            min={0}
+         <MoneyInput
             value={value}
-            onChange={(event) => onChange(Number(event.target.value) || 0)}
+            onChange={onChange}
             className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
          />
       </label>

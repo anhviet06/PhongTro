@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import type { InvoiceWithDetails, Payment, PaymentMethod } from '../../shared/types';
 import Dialog from '../Dialog';
+import MoneyInput from '../MoneyInput';
 import { formatVND } from '../../lib/format';
 import PaymentHistory from './PaymentHistory';
 
@@ -89,11 +90,10 @@ export default function PaymentModal({ open, invoice, onClose, onPaid }: Payment
 
                <section className="grid gap-md md:grid-cols-2">
                   <label className="block">
-                     <span className="text-label-sm text-on-surface-variant">Số tiền thanh toán</span>
-                     <input
-                        type="number"
+                     <span className="text-label-sm text-on-surface-variant">Số tiền thanh toán (đ)</span>
+                     <MoneyInput
                         value={amount}
-                        onChange={(event) => setAmount(Number(event.target.value))}
+                        onChange={setAmount}
                         className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
                      />
                   </label>

@@ -3,6 +3,7 @@
  */
 
 import type { Area, RoomWithArea } from '../../shared/types';
+import MoneyInput from '../MoneyInput';
 
 export interface RoomFormValue {
    area_id: number;
@@ -95,29 +96,26 @@ export default function RoomForm({ areas, value, onChange }: RoomFormProps) {
             />
          </label>
          <label className="block">
-            <span className="text-label-sm text-on-surface-variant">Giá thuê</span>
-            <input
-               type="number"
+            <span className="text-label-sm text-on-surface-variant">Giá thuê (đ)</span>
+            <MoneyInput
                value={value.price}
-               onChange={(event) => set('price', Number(event.target.value))}
+               onChange={(next) => set('price', next)}
                className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
             />
          </label>
          <label className="block">
-            <span className="text-label-sm text-on-surface-variant">Đơn giá điện</span>
-            <input
-               type="number"
+            <span className="text-label-sm text-on-surface-variant">Đơn giá điện (đ/kWh)</span>
+            <MoneyInput
                value={value.electric_unit_price}
-               onChange={(event) => set('electric_unit_price', Number(event.target.value))}
+               onChange={(next) => set('electric_unit_price', next)}
                className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
             />
          </label>
          <label className="block">
-            <span className="text-label-sm text-on-surface-variant">Đơn giá nước</span>
-            <input
-               type="number"
+            <span className="text-label-sm text-on-surface-variant">Đơn giá nước (đ/m³)</span>
+            <MoneyInput
                value={value.water_unit_price}
-               onChange={(event) => set('water_unit_price', Number(event.target.value))}
+               onChange={(next) => set('water_unit_price', next)}
                className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
             />
          </label>

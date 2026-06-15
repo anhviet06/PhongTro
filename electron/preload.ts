@@ -171,6 +171,8 @@ contextBridge.exposeInMainWorld('api', {
    backup: {
       backup: (savePath?: string) => invoke('backup:backup', savePath),
       restore: (openPath?: string) => invoke('backup:restore', openPath),
+      resetBusinessData: (password: string) =>
+         invoke('backup:reset-business-data', password),
    },
 
    update: {

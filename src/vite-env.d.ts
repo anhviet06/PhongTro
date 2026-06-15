@@ -197,6 +197,7 @@ interface PhongTroApi {
    backup: {
       backup(savePath?: string): Promise<ExportResult>;
       restore(openPath?: string): Promise<ExportResult>;
+      resetBusinessData(password: string): Promise<{ success: boolean; tablesCleared: string[] }>;
    };
 
    update: {

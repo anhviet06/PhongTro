@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import type { RoomWithArea } from '../../shared/types';
 import Dialog from '../Dialog';
+import MoneyInput from '../MoneyInput';
 
 interface AddTenantModalProps {
    open: boolean;
@@ -130,12 +131,14 @@ export default function AddTenantModal({ open, rooms, onClose, onCreated }: AddT
                value={form.move_in_date}
                onChange={(value) => set('move_in_date', value)}
             />
-            <TextInput
-               label="Tiền cọc"
-               type="number"
-               value={String(form.deposit)}
-               onChange={(value) => set('deposit', Number(value))}
-            />
+            <label className="block">
+               <span className="text-label-sm text-on-surface-variant">Tiền cọc (đ)</span>
+               <MoneyInput
+                  value={form.deposit}
+                  onChange={(next) => set('deposit', next)}
+                  className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
+               />
+            </label>
             <label className="block md:col-span-2">
                <span className="text-label-sm text-on-surface-variant">Thường trú</span>
                <textarea

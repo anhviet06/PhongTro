@@ -124,3 +124,50 @@ export async function restoreData(openPath?: string) {
 
    return { success: true, filePath };
 }
+
+/**
+ * Reset dữ liệu kinh doanh — xoá tenants/contracts/invoices/payments/meters/vehicles,
+ * GIỮ areas (tên + đơn giá khu), rooms (giá phòng), services, settings (landlord info).
+ *
+ * Yêu cầu password để tránh xoá nhầm. Pass mặc định "474747".
+ * Sau reset: tất cả phòng về status='vacant'.
+ */
+export function resetBusinessData(password: string): { success: boolean; tablesCleared: string[] } {
+   if (password !== '474747') {
+      throw new Error('Mật khẩu không đúng. Reset bị huỷ.');
+   }
+
+   const db = getDb();
+   const cleared: string[] = [];
+
+   db.pragma('foreign_keys = OFF');
+   const trx = db.transaction(() => {
+      // Xoá theo thứ tự dependency (children trước parent)
+      const tablesToClear = [
+         'payments',
+         'invoice_services',
+         'invoices',
+         'meter_readings',
+         'contracts',
+         'vehicles',
+         'tenants',
+      ];
+
+      for (const table of tablesToClear) {
+         const result = db.prepare(`DELETE FROM ${table}`).run();
+         cleared.push(`${table} (${result.changes} rows)`);
+      }
+
+      // Reset room.status về 'vacant' cho mọi phòng (vì không còn HĐ/khách)
+      db.prepare("UPDATE rooms SET status = 'vacant'").run();
+      cleared.push('rooms.status → vacant');
+   });
+
+   try {
+      trx();
+   } finally {
+      db.pragma('foreign_keys = ON');
+   }
+
+   return { success: true, tablesCleared: cleared };
+}

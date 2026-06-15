@@ -4,6 +4,7 @@
 
 import { getDb } from '../index';
 import type { Contract, ContractStatus, ContractWithDetails } from '../../../src/shared/types';
+import * as roomsRepo from './rooms.repo';
 
 export interface ContractInput {
    room_id: number;
@@ -129,7 +130,11 @@ export function update(id: number, patch: ContractPatch): ContractWithDetails | 
 }
 
 export function terminate(id: number): ContractWithDetails | null {
-   return update(id, { status: 'terminated' });
+   const contract = update(id, { status: 'terminated' });
+   // Terminate giữ record HĐ nhưng không còn active → room.status sẽ được recompute
+   // (về 'vacant' nếu không còn HĐ active khác trên cùng phòng).
+   if (contract) roomsRepo.recomputeStatus(contract.room_id);
+   return contract;
 }
 
 export function expiringSoon(days: number): ContractWithDetails[] {
@@ -149,7 +154,18 @@ export function expiringSoon(days: number): ContractWithDetails[] {
 
 export function deleteById(id: number): boolean {
    const db = getDb();
+   // Lưu room_id trước khi xoá để recompute status sau
+   const contract = db
+      .prepare('SELECT room_id FROM contracts WHERE id = ?')
+      .get(id) as { room_id: number } | undefined;
    const result = db.prepare('DELETE FROM contracts WHERE id = ?').run(id);
+
+   // Sau khi xoá HĐ, recompute room status — nếu không còn HĐ active → room về 'vacant'
+   // Quy trình "xoá HĐ kết thúc → phòng trống" theo yêu cầu user.
+   if (result.changes > 0 && contract) {
+      roomsRepo.recomputeStatus(contract.room_id);
+   }
+
    return result.changes > 0;
 }
 

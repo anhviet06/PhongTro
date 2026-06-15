@@ -243,6 +243,7 @@ function registerIpcHandlers(): void {
 
    handle('backup:backup', (_, savePath) => backupService.backupData(savePath));
    handle('backup:restore', (_, openPath) => backupService.restoreData(openPath));
+   handle('backup:reset-business-data', (_, password) => backupService.resetBusinessData(password));
 
    // Auto-update
    handle('update:check', () => autoUpdater.checkForUpdatesAndNotify());

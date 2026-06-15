@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FileText, X } from 'lucide-react';
 import type { RoomWithArea, Settings, TenantWithRoom } from '../../shared/types';
+import MoneyInput from '../MoneyInput';
 
 interface CreateContractModalProps {
    open: boolean;
@@ -153,18 +154,22 @@ export default function CreateContractModal({
                            ))}
                         </select>
                      </label>
-                     <TextInput
-                        type="number"
-                        label="Giá thuê"
-                        value={String(form.rent_price)}
-                        onChange={(value) => set('rent_price', Number(value))}
-                     />
-                     <TextInput
-                        type="number"
-                        label="Tiền cọc"
-                        value={String(form.deposit)}
-                        onChange={(value) => set('deposit', Number(value))}
-                     />
+                     <label className="block">
+                        <span className="text-label-sm text-on-surface-variant">Giá thuê (đ)</span>
+                        <MoneyInput
+                           value={form.rent_price}
+                           onChange={(next) => set('rent_price', next)}
+                           className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
+                        />
+                     </label>
+                     <label className="block">
+                        <span className="text-label-sm text-on-surface-variant">Tiền cọc (đ)</span>
+                        <MoneyInput
+                           value={form.deposit}
+                           onChange={(next) => set('deposit', next)}
+                           className="mt-xs h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md outline-none focus:border-primary"
+                        />
+                     </label>
                      <TextInput
                         type="date"
                         label="Ngày bắt đầu"
