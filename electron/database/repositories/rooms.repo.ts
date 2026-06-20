@@ -25,12 +25,14 @@ const roomWithAreaSelect = `
       a.name AS area_name,
       a.address AS area_address,
       COALESCE(
-         (SELECT COUNT(*) FROM tenants t WHERE t.room_id = r.id AND t.move_out_date = ''),
+         (SELECT COUNT(*) FROM tenants t WHERE t.room_id = r.id
+             AND (t.move_out_date = '' OR date(t.move_out_date) > date('now'))),
          0
       ) AS current_tenant_count,
       (
          SELECT t.full_name FROM tenants t
-         WHERE t.room_id = r.id AND t.is_primary = 1 AND t.move_out_date = ''
+         WHERE t.room_id = r.id AND t.is_primary = 1
+           AND (t.move_out_date = '' OR date(t.move_out_date) > date('now'))
          LIMIT 1
       ) AS primary_tenant_name
    FROM rooms r

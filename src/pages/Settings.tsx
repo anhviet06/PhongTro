@@ -14,11 +14,12 @@ import {
    Trash2,
    XCircle,
 } from 'lucide-react';
-import type { Area, Service, Settings as SettingsMap } from '../shared/types';
+import type { Area, RoomWithArea, Service, Settings as SettingsMap } from '../shared/types';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import MoneyInput from '../components/MoneyInput';
 import BackupSection from '../components/settings/BackupSection';
+import MetersEditor from '../components/settings/MetersEditor';
 import UpdateChecker from '../components/settings/UpdateChecker';
 
 const landlordKeys = ['landlord_name', 'landlord_cccd', 'landlord_phone', 'landlord_address'];
@@ -39,6 +40,7 @@ interface ServiceForm {
 export default function Settings() {
    const [settings, setSettings] = useState<SettingsMap>({});
    const [areas, setAreas] = useState<Area[]>([]);
+   const [rooms, setRooms] = useState<RoomWithArea[]>([]);
    const [services, setServices] = useState<ServiceForm[]>([]);
    const [removedServiceIds, setRemovedServiceIds] = useState<number[]>([]);
    const [systemInfo, setSystemInfo] = useState<SystemInfo>({ version: '', dbPath: '' });
@@ -75,15 +77,17 @@ export default function Settings() {
       setLoading(true);
       setError(null);
       try {
-         const [settingValues, areaList, serviceList, version, dbPath] = await Promise.all([
+         const [settingValues, areaList, roomList, serviceList, version, dbPath] = await Promise.all([
             window.api.settings.getMany(landlordKeys),
             window.api.areas.list(),
+            window.api.rooms.listAll(),
             window.api.services.listAll(),
             window.api.system.getVersion(),
             window.api.system.getDbPath(),
          ]);
          setSettings(settingValues);
          setAreas(areaList);
+         setRooms(roomList);
          setServices(
             serviceList.map((service) => ({
                id: service.id,
@@ -400,6 +404,18 @@ export default function Settings() {
                </div>
             )}
          </section>
+
+         <MetersEditor
+            rooms={rooms}
+            onMessage={(text) => {
+               setMessage(text);
+               setError(null);
+            }}
+            onError={(text) => {
+               setError(text);
+               setMessage(null);
+            }}
+         />
 
          <BackupSection
             onDone={(nextMessage) => {

@@ -45,7 +45,8 @@ const invoiceWithDetailsSelect = `
    FROM invoices i
    JOIN rooms r ON r.id = i.room_id
    JOIN areas a ON a.id = r.area_id
-   LEFT JOIN tenants t ON t.room_id = r.id AND t.is_primary = 1 AND t.move_out_date = ''
+   LEFT JOIN tenants t ON t.room_id = r.id AND t.is_primary = 1
+      AND (t.move_out_date = '' OR date(t.move_out_date) > date('now'))
 `;
 
 function listServices(invoiceId: number): InvoiceService[] {

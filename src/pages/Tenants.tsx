@@ -4,17 +4,18 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, FileText, Filter, Plus, Users, DoorOpen } from 'lucide-react';
-import type { RoomWithArea, TenantWithRoom } from '../shared/types';
+import type { RoomWithArea, Settings, TenantWithRoom } from '../shared/types';
 import StatCard from '../components/StatCard';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import TenantTable from '../components/tenants/TenantTable';
 import TenantDetailModal from '../components/tenants/TenantDetailModal';
-import AddTenantModal from '../components/tenants/AddTenantModal';
+import AddTenantContractModal from '../components/tenants/AddTenantContractModal';
 
 interface TenantsState {
    tenants: TenantWithRoom[];
    rooms: RoomWithArea[];
+   settings: Settings;
    vacantCount: number;
    expiringCount: number;
    loading: boolean;
@@ -27,6 +28,7 @@ export default function Tenants() {
    const [state, setState] = useState<TenantsState>({
       tenants: [],
       rooms: [],
+      settings: {},
       vacantCount: 0,
       expiringCount: 0,
       loading: true,
@@ -39,15 +41,22 @@ export default function Tenants() {
    const loadData = async () => {
       setState((current) => ({ ...current, loading: true, error: null }));
       try {
-         const [tenants, rooms, counts, expiring] = await Promise.all([
+         const [tenants, rooms, counts, expiring, settings] = await Promise.all([
             window.api.tenants.listAll(),
             window.api.rooms.listAll(),
             window.api.rooms.countByStatus(),
             window.api.contracts.expiringSoon(30),
+            window.api.settings.getMany([
+               'landlord_name',
+               'landlord_cccd',
+               'landlord_phone',
+               'landlord_address',
+            ]),
          ]);
          setState({
             tenants,
             rooms,
+            settings,
             vacantCount: counts.vacant,
             expiringCount: expiring.length,
             loading: false,
@@ -170,7 +179,24 @@ export default function Tenants() {
                <EmptyState icon={Users} title="Chưa có khách thuê" />
             ) : (
                <>
-                  <TenantTable tenants={pagedTenants} onDetail={setSelectedTenant} />
+                  <TenantTable
+                     tenants={pagedTenants}
+                     onDetail={setSelectedTenant}
+                     onDelete={async (tenant) => {
+                        const ok = window.confirm(
+                           `Xóa khách thuê "${tenant.full_name}"?\nLưu ý: phương tiện đăng ký của khách này cũng sẽ bị xóa.`
+                        );
+                        if (!ok) return;
+                        try {
+                           await window.api.tenants.delete(tenant.id);
+                           await loadData();
+                        } catch (error) {
+                           window.alert(
+                              `Xóa thất bại: ${error instanceof Error ? error.message : String(error)}`
+                           );
+                        }
+                     }}
+                  />
                   <div className="flex flex-wrap items-center justify-between gap-md rounded-lg border border-outline-variant bg-surface-container-lowest px-md py-sm">
                      <p className="text-body-md text-on-surface-variant">
                         Trang {page}/{totalPages}
@@ -202,10 +228,12 @@ export default function Tenants() {
             open={!!selectedTenant}
             tenant={selectedTenant}
             onClose={() => setSelectedTenant(null)}
+            onUpdated={loadData}
          />
-         <AddTenantModal
+         <AddTenantContractModal
             open={addOpen}
             rooms={state.rooms}
+            settings={state.settings}
             onClose={() => setAddOpen(false)}
             onCreated={loadData}
          />

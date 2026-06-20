@@ -168,7 +168,8 @@ export function countActiveInRoom(roomId: number): number {
          `
          SELECT COUNT(*) AS total
          FROM tenants
-         WHERE room_id = ? AND move_out_date = ''
+         WHERE room_id = ?
+           AND (move_out_date = '' OR date(move_out_date) > date('now'))
       `
       )
       .get(roomId) as { total: number };

@@ -8,23 +8,53 @@ import fs from 'fs';
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
 /**
- * Rollup output plugin: strip trailing ESM `export { ... };` block.
- *
- * Lý do: Vite lib mode (`build.lib`) khi output format='cjs' VẪN emit ESM-style
- * `export { name };` block ở cuối file để expose named exports — đây là Rollup quirk.
- * Trong file `.cjs` mà có `export` keyword → Electron load thành CJS → SyntaxError.
- *
- * Plugin này quét bundle, với mỗi chunk `.cjs` xoá đoạn `export { ... };` cuối file.
- * Side-effect (contextBridge.exposeInMainWorld) vẫn chạy bình thường — preload không cần export.
+ * Rollup output plugin cho .cjs:
+ *  1. Strip trailing ESM `export { ... };` block (Rollup quirk khi format='cjs').
+ *  2. Rewrite leftover ESM `import X from "node:Y"` → `const X = require("node:Y")`.
+ *     Lý do: Rollup đôi khi không convert `node:*` prefix imports vì coi như external,
+ *     dẫn đến ESM `import` statement còn lại trong file .cjs → Electron throw SyntaxError.
  */
 const stripCjsExportBlockPlugin = {
    name: 'strip-cjs-export-block',
    generateBundle(_options: unknown, bundle: Record<string, { type: string; code?: string }>) {
       for (const fileName in bundle) {
          const chunk = bundle[fileName];
-         if (chunk.type === 'chunk' && fileName.endsWith('.cjs') && chunk.code) {
-            chunk.code = chunk.code.replace(/\nexport\s*\{[^}]*\};?\s*$/m, '\n');
-         }
+         if (chunk.type !== 'chunk' || !fileName.endsWith('.cjs') || !chunk.code) continue;
+
+         let code = chunk.code;
+         // 1. Strip ESM export block
+         code = code.replace(/\nexport\s*\{[^}]*\};?\s*$/m, '\n');
+
+         // 2-4. Rewrite ESM imports → require() cho Node built-ins (cả `fs` lẫn `node:fs`)
+         //      và external bare imports mà Rollup không convert (vd: `pdfkit/...`).
+         // Pattern source: bất kỳ string nào không phải đường dẫn relative './...' hoặc '/...'
+         const importPathPattern = `["']([^"'./][^"']*)["']`;
+
+         // a) import X from "Y";
+         code = code.replace(
+            new RegExp(`^import\\s+(\\w[\\w$]*)\\s+from\\s+${importPathPattern};?$`, 'gm'),
+            'const $1 = require("$2");'
+         );
+         // b) import { a, b as c } from "Y";
+         code = code.replace(
+            new RegExp(`^import\\s+\\{([^}]+)\\}\\s+from\\s+${importPathPattern};?$`, 'gm'),
+            'const {$1} = require("$2");'
+         );
+         // c) import * as X from "Y";
+         code = code.replace(
+            new RegExp(
+               `^import\\s+\\*\\s+as\\s+(\\w[\\w$]*)\\s+from\\s+${importPathPattern};?$`,
+               'gm'
+            ),
+            'const $1 = require("$2");'
+         );
+         // d) import "Y";  (side-effect-only import)
+         code = code.replace(
+            new RegExp(`^import\\s+${importPathPattern};?$`, 'gm'),
+            'require("$1");'
+         );
+
+         chunk.code = code;
       }
    },
 };

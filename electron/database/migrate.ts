@@ -47,9 +47,13 @@ export function runMigrations(db: DatabaseInstanceType): { applied: string[]; sk
       (db.prepare('SELECT name FROM _migrations').all() as MigrationRow[]).map((r) => r.name)
    );
 
+   // Demo data migrations CHỈ chạy trong dev (tránh user mới cài thấy 30 khách thuê giả).
+   // Pattern: file có chữ `demo` trong tên (vd: 003_demo_data.sql).
+   const isDev = !app.isPackaged && process.env.PHONGTRO_SEED_DEMO !== '0';
    const files = fs
       .readdirSync(migrationsDir)
       .filter((f) => f.toLowerCase().endsWith('.sql'))
+      .filter((f) => isDev || !f.toLowerCase().includes('demo'))
       .sort();
 
    const appliedNow: string[] = [];

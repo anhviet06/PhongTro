@@ -2,7 +2,7 @@
  * Bảng hóa đơn theo kỳ.
  */
 
-import { Eye, Printer, Send } from 'lucide-react';
+import { Eye, FileSpreadsheet, FileText, Send } from 'lucide-react';
 import type { InvoiceStatus, InvoiceWithDetails } from '../../shared/types';
 import Chip from '../Chip';
 import { formatDate, formatVND } from '../../lib/format';
@@ -13,7 +13,8 @@ interface InvoiceTableProps {
    onFilterChange: (filter: InvoiceStatus | 'all') => void;
    onDetail: (invoice: InvoiceWithDetails) => void;
    onNotify: (invoice: InvoiceWithDetails) => void;
-   onPrint: (invoice: InvoiceWithDetails) => void;
+   onExportPdf: (invoice: InvoiceWithDetails) => void;
+   onExportExcel: (invoice: InvoiceWithDetails) => void;
 }
 
 export default function InvoiceTable({
@@ -22,7 +23,8 @@ export default function InvoiceTable({
    onFilterChange,
    onDetail,
    onNotify,
-   onPrint,
+   onExportPdf,
+   onExportExcel,
 }: InvoiceTableProps) {
    const filtered =
       filter === 'all' ? invoices : invoices.filter((invoice) => invoice.status === filter);
@@ -97,7 +99,16 @@ export default function InvoiceTable({
                            <div className="flex justify-end gap-xs opacity-60 transition group-hover:opacity-100">
                               <Action title="Xem" onClick={() => onDetail(invoice)} icon={Eye} />
                               <Action title="Gửi" onClick={() => onNotify(invoice)} icon={Send} />
-                              <Action title="In" onClick={() => onPrint(invoice)} icon={Printer} />
+                              <Action
+                                 title="Xuất PDF"
+                                 onClick={() => onExportPdf(invoice)}
+                                 icon={FileText}
+                              />
+                              <Action
+                                 title="Xuất Excel"
+                                 onClick={() => onExportExcel(invoice)}
+                                 icon={FileSpreadsheet}
+                              />
                            </div>
                         </td>
                      </tr>

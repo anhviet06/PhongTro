@@ -4,14 +4,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FileText, Plus, ScrollText, X } from 'lucide-react';
+import { FileText, ScrollText, X } from 'lucide-react';
 import type { ContractWithDetails, RoomWithArea, Settings, TenantWithRoom } from '../shared/types';
 import StatCard from '../components/StatCard';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import ContractList from '../components/contracts/ContractList';
 import ContractDetailModal from '../components/contracts/ContractDetailModal';
-import CreateContractModal from '../components/contracts/CreateContractModal';
 import ExportFormatPicker from '../components/contracts/ExportFormatPicker';
 
 interface ContractsState {
@@ -32,7 +31,6 @@ export default function Contracts() {
       loading: true,
       error: null,
    });
-   const [createOpen, setCreateOpen] = useState(false);
    const [exportContract, setExportContract] = useState<ContractWithDetails | null>(null);
    const [viewContract, setViewContract] = useState<ContractWithDetails | null>(null);
    const [searchParams, setSearchParams] = useSearchParams();
@@ -83,6 +81,19 @@ export default function Contracts() {
    const terminateContract = async (contract: ContractWithDetails) => {
       await window.api.contracts.terminate(contract.id);
       await loadData();
+   };
+
+   const deleteContract = async (contract: ContractWithDetails) => {
+      const ok = window.confirm(
+         `Xóa vĩnh viễn hợp đồng phòng ${contract.room_name} (khách: ${contract.tenant_name || '-'})?\nDữ liệu hóa đơn liên quan vẫn được giữ.`
+      );
+      if (!ok) return;
+      try {
+         await window.api.contracts.delete(contract.id);
+         await loadData();
+      } catch (error) {
+         alert(`Xóa thất bại: ${error instanceof Error ? error.message : String(error)}`);
+      }
    };
 
    const exportPdf = async () => {
@@ -141,17 +152,9 @@ export default function Contracts() {
             <div>
                <h2 className="text-headline-md text-on-surface">Hợp đồng</h2>
                <p className="mt-xs text-body-md text-on-surface-variant">
-                  Tạo, theo dõi và xuất hợp đồng thuê phòng.
+                  Theo dõi, xuất và xoá HĐ. HĐ được tạo tự động khi thêm khách thuê.
                </p>
             </div>
-            <button
-               type="button"
-               onClick={() => setCreateOpen(true)}
-               className="focus-ring flex h-10 items-center gap-sm rounded-lg bg-primary px-md font-semibold text-on-primary hover:bg-primary-container"
-            >
-               <Plus className="h-5 w-5" />
-               <span>Tạo hợp đồng mới</span>
-            </button>
          </div>
 
          <section className="grid gap-md md:grid-cols-3">
@@ -206,17 +209,9 @@ export default function Contracts() {
                onExport={setExportContract}
                onView={setViewContract}
                onTerminate={terminateContract}
+               onDelete={deleteContract}
             />
          )}
-
-         <CreateContractModal
-            open={createOpen}
-            rooms={state.rooms}
-            tenants={state.tenants}
-            settings={state.settings}
-            onClose={() => setCreateOpen(false)}
-            onCreated={loadData}
-         />
 
          <ContractDetailModal
             open={!!viewContract}

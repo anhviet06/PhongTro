@@ -2,7 +2,7 @@
  * Bảng danh sách hợp đồng.
  */
 
-import { Download, FileText, XCircle } from 'lucide-react';
+import { Download, FileText, Trash2, XCircle } from 'lucide-react';
 import type { ContractWithDetails } from '../../shared/types';
 import Chip from '../Chip';
 import { formatDate, formatVND } from '../../lib/format';
@@ -12,6 +12,7 @@ interface ContractListProps {
    onExport: (contract: ContractWithDetails) => void;
    onView: (contract: ContractWithDetails) => void;
    onTerminate: (contract: ContractWithDetails) => void;
+   onDelete?: (contract: ContractWithDetails) => void;
 }
 
 function statusText(status: ContractWithDetails['status']) {
@@ -26,7 +27,7 @@ function statusTone(status: ContractWithDetails['status']) {
    return 'danger';
 }
 
-export default function ContractList({ contracts, onExport, onView, onTerminate }: ContractListProps) {
+export default function ContractList({ contracts, onExport, onView, onTerminate, onDelete }: ContractListProps) {
    return (
       <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest shadow-sm">
          <div className="overflow-x-auto">
@@ -88,6 +89,16 @@ export default function ContractList({ contracts, onExport, onView, onTerminate 
                               >
                                  <XCircle className="h-4 w-4" />
                               </button>
+                              {onDelete && (
+                                 <button
+                                    type="button"
+                                    onClick={() => onDelete(contract)}
+                                    className="focus-ring grid h-9 w-9 place-items-center rounded-full text-error hover:bg-error-container hover:text-on-error-container"
+                                    title="Xóa hợp đồng"
+                                 >
+                                    <Trash2 className="h-4 w-4" />
+                                 </button>
+                              )}
                            </div>
                         </td>
                      </tr>

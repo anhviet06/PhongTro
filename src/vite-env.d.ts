@@ -132,6 +132,9 @@ interface PhongTroApi {
    };
 
    meters: {
+      setBaseline(roomId: number, electric: number, water: number): Promise<MeterReading>;
+      getBaseline(roomId: number): Promise<MeterReading | null>;
+      listByRoom(roomId: number): Promise<MeterReading[]>;
       getByRoomPeriod(roomId: number, period: string): Promise<MeterReading | null>;
       getPrevious(roomId: number, period: string): Promise<MeterReading | null>;
       getLatestBefore(roomId: number, period: string): Promise<MeterReading | null>;
@@ -189,6 +192,7 @@ interface PhongTroApi {
 
    export: {
       invoiceExcel(invoiceId: number, savePath?: string): Promise<ExportResult>;
+      invoicePdf(invoiceId: number, savePath?: string): Promise<ExportResult>;
       invoicesByPeriodExcel(period: string, savePath?: string): Promise<ExportResult>;
       revenueExcel(filter?: RevenueReportFilter, savePath?: string): Promise<ExportResult>;
       tenantsExcel(savePath?: string): Promise<ExportResult>;
@@ -198,6 +202,43 @@ interface PhongTroApi {
       backup(savePath?: string): Promise<ExportResult>;
       restore(openPath?: string): Promise<ExportResult>;
       resetBusinessData(password: string): Promise<{ success: boolean; tablesCleared: string[] }>;
+   };
+
+   lifecycle: {
+      process(): Promise<{
+         renewed: ContractWithDetails[];
+         terminated: ContractWithDetails[];
+         expired: ContractWithDetails[];
+      }>;
+      promotePrimary(tenantId: number): Promise<{
+         oldContract: ContractWithDetails | null;
+         newContract: ContractWithDetails;
+         oldPrimary: Tenant | null;
+      }>;
+      createTenantsWithContract(data: {
+         room_id: number;
+         tenants: Array<{
+            full_name: string;
+            dob?: string;
+            phone?: string;
+            cccd?: string;
+            permanent_address?: string;
+            move_in_date?: string;
+            move_out_date?: string;
+            vehicles?: Array<{ plate_number: string; vehicle_type: string }>;
+         }>;
+         contract: {
+            rent_price: number;
+            deposit: number;
+            start_date: string;
+            end_date: string;
+            terms?: string;
+            landlord_name: string;
+            landlord_cccd: string;
+            landlord_phone: string;
+            landlord_address: string;
+         };
+      }): Promise<{ tenant_ids: number[]; contract: ContractWithDetails }>;
    };
 
    update: {

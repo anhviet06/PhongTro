@@ -22,7 +22,10 @@ import * as statsRepo from './database/repositories/stats.repo';
 import * as billingService from './services/billing';
 import * as contractGenService from './services/contract-gen';
 import * as excelExportService from './services/excel-export';
+import * as invoicePdfService from './services/invoice-pdf';
 import * as backupService from './services/backup';
+import * as contractLifecycle from './services/contract-lifecycle';
+import * as tenantsLifecycle from './services/tenants-lifecycle';
 import { cleanupOldLogs, logError, logInfo } from './services/log';
 
 const electron = require('electron') as typeof import('electron');
@@ -178,6 +181,11 @@ function registerIpcHandlers(): void {
    handle('contracts:expiring-soon', (_, days) => contractsRepo.expiringSoon(days));
 
    // Meters
+   handle('meters:set-baseline', (_, roomId, electric, water) =>
+      metersRepo.setBaseline(roomId, electric, water)
+   );
+   handle('meters:get-baseline', (_, roomId) => metersRepo.getBaseline(roomId));
+   handle('meters:list-by-room', (_, roomId) => metersRepo.listByRoom(roomId));
    handle('meters:get-by-room-period', (_, roomId, period) =>
       metersRepo.getByRoomPeriod(roomId, period)
    );
@@ -233,6 +241,9 @@ function registerIpcHandlers(): void {
    handle('export:invoice-excel', (_, invoiceId, savePath) =>
       excelExportService.exportInvoiceExcel(invoiceId, savePath)
    );
+   handle('export:invoice-pdf', (_, invoiceId, savePath) =>
+      invoicePdfService.exportInvoicePdf(invoiceId, savePath)
+   );
    handle('export:invoices-by-period-excel', (_, period, savePath) =>
       excelExportService.exportInvoicesByPeriod(period, savePath)
    );
@@ -244,6 +255,15 @@ function registerIpcHandlers(): void {
    handle('backup:backup', (_, savePath) => backupService.backupData(savePath));
    handle('backup:restore', (_, openPath) => backupService.restoreData(openPath));
    handle('backup:reset-business-data', (_, password) => backupService.resetBusinessData(password));
+
+   // Tenant/Contract lifecycle services
+   handle('lifecycle:process', () => contractLifecycle.processLifecycle());
+   handle('lifecycle:promote-primary', (_, tenantId) =>
+      tenantsLifecycle.promoteToPrimary(tenantId)
+   );
+   handle('lifecycle:create-tenants-with-contract', (_, data) =>
+      tenantsLifecycle.createTenantsWithContract(data)
+   );
 
    // Auto-update
    handle('update:check', () => autoUpdater.checkForUpdatesAndNotify());
@@ -283,6 +303,23 @@ app.whenReady().then(() => {
       cleanupOldLogs(30);
       registerIpcHandlers();
       logInfo(`Database ready at: ${dbPath}`);
+
+      // Process contract lifecycle on app start (auto renew + auto terminate).
+      // Forward kết quả cho renderer để Dashboard hiển thị thông báo.
+      try {
+         const lifecycleResult = contractLifecycle.processLifecycle();
+         logInfo(
+            `Lifecycle processed: ${lifecycleResult.renewed.length} renewed, ${lifecycleResult.terminated.length} terminated, ${lifecycleResult.expired.length} expired`
+         );
+         // Gửi cho renderer (delay nhẹ để main window finish load)
+         setTimeout(() => {
+            if (win && !win.isDestroyed()) {
+               win.webContents.send('lifecycle:processed', lifecycleResult);
+            }
+         }, 1500);
+      } catch (err) {
+         logError('Lifecycle processing failed', err);
+      }
    } catch (error) {
       logError('Khởi tạo Database thất bại', error);
    }

@@ -3,13 +3,19 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Banknote, DoorOpen, Eye, ScrollText } from 'lucide-react';
+import { AlertTriangle, Banknote, DoorOpen, Eye, RefreshCcw, ScrollText, X } from 'lucide-react';
 import type {
    ContractWithDetails,
    DashboardSummary,
    RevenueByMonthRow,
    RoomWithArea,
 } from '../shared/types';
+
+interface LifecycleNotice {
+   renewed: ContractWithDetails[];
+   terminated: ContractWithDetails[];
+   expired: ContractWithDetails[];
+}
 import StatCard from '../components/StatCard';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
@@ -53,6 +59,23 @@ export default function Dashboard() {
       loading: true,
       error: null,
    });
+   const [lifecycle, setLifecycle] = useState<LifecycleNotice | null>(null);
+
+   // Lắng nghe event lifecycle:processed từ main process (gửi sau khi app khởi động).
+   useEffect(() => {
+      const handler = (_event: unknown, data: LifecycleNotice) => {
+         if (
+            data &&
+            (data.renewed.length > 0 || data.terminated.length > 0 || data.expired.length > 0)
+         ) {
+            setLifecycle(data);
+         }
+      };
+      window.ipcRenderer.on('lifecycle:processed', handler);
+      return () => {
+         window.ipcRenderer.off('lifecycle:processed', handler);
+      };
+   }, []);
 
    useEffect(() => {
       let alive = true;
@@ -133,6 +156,41 @@ export default function Dashboard() {
                </p>
             </div>
          </div>
+
+         {lifecycle && (
+            <div className="flex items-start gap-sm rounded-lg border border-primary/30 bg-primary-fixed p-md shadow-sm">
+               <RefreshCcw className="mt-xs h-5 w-5 shrink-0 text-primary" />
+               <div className="flex-1">
+                  <p className="text-headline-sm text-on-surface">Đã tự xử lý hợp đồng tới hạn</p>
+                  <p className="mt-xs text-body-md text-on-surface-variant">
+                     {lifecycle.renewed.length > 0 && (
+                        <>
+                           <strong>{lifecycle.renewed.length}</strong> HĐ đã gia hạn (sinh HĐ
+                           mới){' '}
+                        </>
+                     )}
+                     {lifecycle.expired.length > 0 && (
+                        <>
+                           · <strong>{lifecycle.expired.length}</strong> HĐ chuyển hết hạn{' '}
+                        </>
+                     )}
+                     {lifecycle.terminated.length > 0 && (
+                        <>
+                           · <strong>{lifecycle.terminated.length}</strong> HĐ chấm dứt (khách đã rời)
+                        </>
+                     )}
+                  </p>
+               </div>
+               <button
+                  type="button"
+                  onClick={() => setLifecycle(null)}
+                  className="focus-ring grid h-8 w-8 place-items-center rounded-full hover:bg-white/30"
+                  title="Đóng thông báo"
+               >
+                  <X className="h-4 w-4" />
+               </button>
+            </div>
+         )}
 
          <section className="grid gap-md md:grid-cols-2 xl:grid-cols-4">
             <StatCard

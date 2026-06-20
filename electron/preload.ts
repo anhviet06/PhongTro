@@ -100,6 +100,10 @@ contextBridge.exposeInMainWorld('api', {
    },
 
    meters: {
+      setBaseline: (roomId: number, electric: number, water: number) =>
+         invoke('meters:set-baseline', roomId, electric, water),
+      getBaseline: (roomId: number) => invoke('meters:get-baseline', roomId),
+      listByRoom: (roomId: number) => invoke('meters:list-by-room', roomId),
       getByRoomPeriod: (roomId: number, period: string) =>
          invoke('meters:get-by-room-period', roomId, period),
       getPrevious: (roomId: number, period: string) =>
@@ -161,6 +165,8 @@ contextBridge.exposeInMainWorld('api', {
    export: {
       invoiceExcel: (invoiceId: number, savePath?: string) =>
          invoke('export:invoice-excel', invoiceId, savePath),
+      invoicePdf: (invoiceId: number, savePath?: string) =>
+         invoke('export:invoice-pdf', invoiceId, savePath),
       invoicesByPeriodExcel: (period: string, savePath?: string) =>
          invoke('export:invoices-by-period-excel', period, savePath),
       revenueExcel: (filter?: unknown, savePath?: string) =>
@@ -173,6 +179,13 @@ contextBridge.exposeInMainWorld('api', {
       restore: (openPath?: string) => invoke('backup:restore', openPath),
       resetBusinessData: (password: string) =>
          invoke('backup:reset-business-data', password),
+   },
+
+   lifecycle: {
+      process: () => invoke('lifecycle:process'),
+      promotePrimary: (tenantId: number) => invoke('lifecycle:promote-primary', tenantId),
+      createTenantsWithContract: (data: unknown) =>
+         invoke('lifecycle:create-tenants-with-contract', data),
    },
 
    update: {

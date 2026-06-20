@@ -2,7 +2,7 @@
  * Bảng danh sách khách thuê.
  */
 
-import { Eye } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import type { TenantWithRoom } from '../../shared/types';
 import Chip from '../Chip';
 import { formatDate } from '../../lib/format';
@@ -10,9 +10,10 @@ import { formatDate } from '../../lib/format';
 interface TenantTableProps {
    tenants: TenantWithRoom[];
    onDetail: (tenant: TenantWithRoom) => void;
+   onDelete?: (tenant: TenantWithRoom) => void;
 }
 
-export default function TenantTable({ tenants, onDetail }: TenantTableProps) {
+export default function TenantTable({ tenants, onDetail, onDelete }: TenantTableProps) {
    return (
       <div className="overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest shadow-sm">
          <div className="overflow-x-auto">
@@ -56,14 +57,27 @@ export default function TenantTable({ tenants, onDetail }: TenantTableProps) {
                               </Chip>
                            </td>
                            <td className="px-md py-sm text-right">
-                              <button
-                                 type="button"
-                                 onClick={() => onDetail(tenant)}
-                                 className="focus-ring inline-flex h-9 items-center gap-xs rounded-lg px-sm text-primary hover:bg-primary-fixed"
-                              >
-                                 <Eye className="h-4 w-4" />
-                                 <span>Chi tiết</span>
-                              </button>
+                              <div className="inline-flex items-center gap-xs">
+                                 <button
+                                    type="button"
+                                    onClick={() => onDetail(tenant)}
+                                    className="focus-ring inline-flex h-9 items-center gap-xs rounded-lg px-sm text-primary hover:bg-primary-fixed"
+                                 >
+                                    <Eye className="h-4 w-4" />
+                                    <span>Chi tiết</span>
+                                 </button>
+                                 {onDelete && (
+                                    <button
+                                       type="button"
+                                       onClick={() => onDelete(tenant)}
+                                       className="focus-ring inline-flex h-9 items-center gap-xs rounded-lg px-sm text-error hover:bg-error-container"
+                                       title="Xóa khách thuê"
+                                    >
+                                       <Trash2 className="h-4 w-4" />
+                                       <span>Xóa</span>
+                                    </button>
+                                 )}
+                              </div>
                            </td>
                         </tr>
                      );

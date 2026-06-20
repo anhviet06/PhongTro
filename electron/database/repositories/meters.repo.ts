@@ -18,6 +18,64 @@ export type MeterReadingPatch = Partial<
    Pick<MeterReadingInput, 'electric_start' | 'electric_end' | 'water_start' | 'water_end'>
 >;
 
+/**
+ * Set chỉ số "đầu vào" cho phòng — dùng khi khách mới kế thừa công tơ từ khách cũ.
+ *
+ * Behavior:
+ *  - Save với period = tháng TRƯỚC (vd today=2026-06 → period='2026-05').
+ *  - electric_start = electric_end = user input (chưa dùng số nào tại thời điểm bàn giao).
+ *  - Tương tự water.
+ *  - Khi billing kỳ hiện tại (2026-06) chạy → `getPrevious` trả về record này
+ *    → `electric_start` của billing = electric_end của baseline = user input. ✓
+ *
+ * Idempotent: nếu period đó đã có record cho phòng → UPDATE thay vì insert (UNIQUE constraint).
+ */
+export function setBaseline(
+   roomId: number,
+   electric: number,
+   water: number
+): MeterReading {
+   const db = getDb();
+   const now = new Date();
+   // Tháng trước (relative to today)
+   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+   const period = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+
+   const existing = getByRoomPeriod(roomId, period);
+   if (existing) {
+      db.prepare(
+         `UPDATE meter_readings SET electric_start = ?, electric_end = ?, water_start = ?, water_end = ? WHERE id = ?`
+      ).run(electric, electric, water, water, existing.id);
+      return getById(existing.id)!;
+   }
+
+   const result = db
+      .prepare(
+         `INSERT INTO meter_readings (room_id, period, electric_start, electric_end, water_start, water_end)
+          VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(roomId, period, electric, electric, water, water);
+   return getById(Number(result.lastInsertRowid))!;
+}
+
+/** Lấy chỉ số baseline gần nhất của phòng (record có period mới nhất hoặc null nếu chưa có). */
+export function getBaseline(roomId: number): MeterReading | null {
+   const db = getDb();
+   return (
+      (db
+         .prepare('SELECT * FROM meter_readings WHERE room_id = ? ORDER BY period DESC LIMIT 1')
+         .get(roomId) as MeterReading | undefined) ?? null
+   );
+}
+
+/** Liệt kê toàn bộ chỉ số của 1 phòng — mới nhất trước. Dùng cho Settings sửa chỉ số. */
+export function listByRoom(roomId: number): MeterReading[] {
+   const db = getDb();
+   return db
+      .prepare('SELECT * FROM meter_readings WHERE room_id = ? ORDER BY period DESC')
+      .all(roomId) as MeterReading[];
+}
+
 export function getByRoomPeriod(roomId: number, period: string): MeterReading | null {
    const db = getDb();
    return (

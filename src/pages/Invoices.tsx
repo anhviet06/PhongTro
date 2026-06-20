@@ -122,17 +122,21 @@ export default function Invoices() {
       if (!selectedRoomId) return;
 
       let alive = true;
+      // Load chỉ số kỳ hiện tại (nếu user đã set trước qua Settings) + chỉ số kỳ trước (làm chỉ số đầu)
       Promise.all([
+         window.api.meters.getByRoomPeriod(selectedRoomId, period),
          window.api.meters.getPrevious(selectedRoomId, period),
          window.api.tenants.countActiveInRoom(selectedRoomId),
-      ]).then(([previous, count]) => {
+      ]).then(([current, previous, count]) => {
          if (!alive) return;
-         const nextElectricStart = previous?.electric_end ?? 0;
-         const nextWaterStart = previous?.water_end ?? 0;
-         setElectricStart(nextElectricStart);
-         setWaterStart(nextWaterStart);
-         setElectricEnd(nextElectricStart);
-         setWaterEnd(nextWaterStart);
+         const prevElectric = previous?.electric_end ?? 0;
+         const prevWater = previous?.water_end ?? 0;
+         // Nếu kỳ này đã có record → ưu tiên load từ DB
+         // (vd user đã set chỉ số đầu kỳ qua Settings Chỉnh chỉ số → billing form tự fill)
+         setElectricStart(current?.electric_start ?? prevElectric);
+         setWaterStart(current?.water_start ?? prevWater);
+         setElectricEnd(current?.electric_end ?? prevElectric);
+         setWaterEnd(current?.water_end ?? prevWater);
          setPeopleCount(count);
       });
 
@@ -188,8 +192,26 @@ export default function Invoices() {
       await loadData();
    };
 
-   const exportInvoice = async (invoice: InvoiceWithDetails) => {
-      await window.api.export.invoiceExcel(invoice.id);
+   const exportInvoicePdf = async (invoice: InvoiceWithDetails) => {
+      try {
+         const result = await window.api.export.invoicePdf(invoice.id);
+         if (result?.success && result.filePath) {
+            alert(`Đã xuất PDF: ${result.filePath}`);
+         }
+      } catch (error) {
+         alert(`Lỗi xuất PDF: ${error instanceof Error ? error.message : String(error)}`);
+      }
+   };
+
+   const exportInvoiceExcel = async (invoice: InvoiceWithDetails) => {
+      try {
+         const result = await window.api.export.invoiceExcel(invoice.id);
+         if (result?.success && result.filePath) {
+            alert(`Đã xuất Excel: ${result.filePath}`);
+         }
+      } catch (error) {
+         alert(`Lỗi xuất Excel: ${error instanceof Error ? error.message : String(error)}`);
+      }
    };
 
    if (state.loading) {
@@ -378,7 +400,8 @@ export default function Invoices() {
             onFilterChange={setFilter}
             onDetail={setDetailInvoice}
             onNotify={setNotifyInvoice}
-            onPrint={exportInvoice}
+            onExportPdf={exportInvoicePdf}
+            onExportExcel={exportInvoiceExcel}
          />
 
          <InvoiceDetailModal

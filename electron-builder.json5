@@ -33,13 +33,19 @@
       artifactName: '${productName}-Windows-${version}-Setup.${ext}',
    },
    nsis: {
-      oneClick: false,
+      // oneClick=true → installer chạy silent (cần thiết cho auto-update mượt).
+      // Khi user ấn "Cập nhật", electron-updater quitAndInstall(silent=true) sẽ chạy
+      // installer mới im lặng, ghi đè binary và re-launch — không cần user click gì.
+      oneClick: true,
       perMachine: false,
-      allowToChangeInstallationDirectory: true,
-      createDesktopShortcut: true,
+      allowToChangeInstallationDirectory: false,
+      createDesktopShortcut: 'always',
       shortcutName: 'PhongTroApp',
       uninstallDisplayName: 'PhongTroApp',
+      // deleteAppDataOnUninstall=false → dữ liệu ở %APPDATA%/phongtro-app/ KHÔNG bị xóa
+      // khi update (cũng như khi user gỡ cài). DB SQLite được giữ nguyên xuyên suốt.
       deleteAppDataOnUninstall: false,
+      // differentialPackage=true (default) → user chỉ download delta giữa 2 version.
       artifactName: '${productName}-Setup-${version}.${ext}',
    },
    linux: {
