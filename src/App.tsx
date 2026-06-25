@@ -6,6 +6,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Rooms from './pages/Rooms';
+import PriceTemplates from './pages/PriceTemplates';
 import Tenants from './pages/Tenants';
 import Contracts from './pages/Contracts';
 import Invoices from './pages/Invoices';
@@ -20,6 +21,7 @@ export default function App() {
             <Route element={<Layout />}>
                <Route index element={<Dashboard />} />
                <Route path="rooms" element={<Rooms />} />
+               <Route path="price-templates" element={<PriceTemplates />} />
                <Route path="tenants" element={<Tenants />} />
                <Route path="contracts" element={<Contracts />} />
                <Route path="invoices" element={<Invoices />} />

@@ -83,7 +83,7 @@ export default function Rooms() {
    if (state.loading) {
       return (
          <div className="flex min-h-[60vh] items-center justify-center">
-            <Spinner label="Đang tải phòng trọ" />
+            <Spinner label="Đang tải phòng" />
          </div>
       );
    }

@@ -20,6 +20,15 @@ export interface Area {
    created_at: string;
 }
 
+export interface PriceTemplate {
+   id: number;
+   name: string;
+   price: number;
+   electric_unit_price: number;
+   water_unit_price: number;
+   created_at: string;
+}
+
 export interface Room {
    id: number;
    area_id: number;
@@ -31,6 +40,7 @@ export interface Room {
    water_unit_price: number;
    max_people: number;
    status: RoomStatus;
+   price_template_id: number | null;
    created_at: string;
 }
 

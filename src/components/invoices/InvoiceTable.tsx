@@ -2,7 +2,7 @@
  * Bảng hóa đơn theo kỳ.
  */
 
-import { Eye, FileSpreadsheet, FileText, Send } from 'lucide-react';
+import { Eye, FileSpreadsheet, FileText, Send, Trash2 } from 'lucide-react';
 import type { InvoiceStatus, InvoiceWithDetails } from '../../shared/types';
 import Chip from '../Chip';
 import { formatDate, formatVND } from '../../lib/format';
@@ -15,6 +15,7 @@ interface InvoiceTableProps {
    onNotify: (invoice: InvoiceWithDetails) => void;
    onExportPdf: (invoice: InvoiceWithDetails) => void;
    onExportExcel: (invoice: InvoiceWithDetails) => void;
+   onDelete: (invoice: InvoiceWithDetails) => void;
 }
 
 export default function InvoiceTable({
@@ -25,6 +26,7 @@ export default function InvoiceTable({
    onNotify,
    onExportPdf,
    onExportExcel,
+   onDelete,
 }: InvoiceTableProps) {
    const filtered =
       filter === 'all' ? invoices : invoices.filter((invoice) => invoice.status === filter);
@@ -109,6 +111,16 @@ export default function InvoiceTable({
                                  onClick={() => onExportExcel(invoice)}
                                  icon={FileSpreadsheet}
                               />
+                              {invoice.status !== 'paid' && (
+                                 <button
+                                    type="button"
+                                    title="Xóa hóa đơn"
+                                    onClick={() => onDelete(invoice)}
+                                    className="focus-ring grid h-9 w-9 place-items-center rounded-full text-error hover:bg-error-container/20"
+                                 >
+                                    <Trash2 className="h-4 w-4" />
+                                 </button>
+                              )}
                            </div>
                         </td>
                      </tr>

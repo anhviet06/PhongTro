@@ -229,7 +229,7 @@ function contractLines(data: ContractData): string[] {
       phone: data.landlord.phone || '',
       address:
          data.landlord.address ||
-         'Thôn 1, Vạn Phúc, Thanh Trì, Hà Nội',
+         'Số 4, Ngách 99, Ngõ 318, Đê La Thành, Hà Nội',
    };
 
    const propertyAddress =

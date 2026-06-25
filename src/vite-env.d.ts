@@ -5,10 +5,10 @@ import type {
    BillingResult,
    ContractWithDetails,
    DashboardSummary,
-   InvoiceService,
    InvoiceWithDetails,
    MeterReading,
    Payment,
+   PriceTemplate,
    RevenueByAreaRow,
    RevenueByMonthRow,
    Room,
@@ -90,6 +90,14 @@ interface PhongTroApi {
       updateStatus(id: number, status: RoomStatus): Promise<Room | null>;
       countByStatus(): Promise<RoomStatusCount>;
    };
+ 
+   priceTemplates: {
+      list(): Promise<PriceTemplate[]>;
+      get(id: number): Promise<PriceTemplate | null>;
+      create(data: { name: string; price: number; electric_unit_price: number; water_unit_price: number }): Promise<PriceTemplate>;
+      update(id: number, patch: Partial<{ name: string; price: number; electric_unit_price: number; water_unit_price: number }>): Promise<PriceTemplate | null>;
+      delete(id: number): Promise<boolean>;
+   };
 
    services: {
       listActive(): Promise<Service[]>;
@@ -153,6 +161,7 @@ interface PhongTroApi {
       ): Promise<InvoiceWithDetails>;
       update(id: number, patch: InvoicePatch): Promise<InvoiceWithDetails | null>;
       recalcStatus(id: number): Promise<InvoiceWithDetails | null>;
+      delete(id: number): Promise<boolean>;
    };
 
    payments: {

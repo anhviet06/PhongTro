@@ -269,7 +269,7 @@ export default function Settings() {
             <div>
                <h3 className="text-headline-sm text-on-surface">Đơn giá điện/nước theo khu</h3>
                <p className="mt-xs text-body-md text-on-surface-variant">
-                  Cấu hình đơn giá mặc định cho từng khu. Khi tạo phòng mới ở khu nào sẽ tự dùng đơn giá khu đó. Phòng đặc biệt có thể sửa riêng ở trang Phòng trọ.
+                   Cấu hình đơn giá mặc định cho từng khu. Khi tạo phòng mới ở khu nào sẽ tự dùng đơn giá khu đó. Phòng đặc biệt có thể sửa riêng ở trang Phòng.
                </p>
             </div>
             <div className="mt-md grid gap-md md:grid-cols-2 xl:grid-cols-3">

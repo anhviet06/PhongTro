@@ -13,11 +13,13 @@ import {
    Settings,
    Users,
    Wallet,
+   Tags,
 } from 'lucide-react';
 
 const navItems = [
    { to: '/', label: 'Tổng quan', icon: LayoutDashboard },
-   { to: '/rooms', label: 'Phòng trọ', icon: DoorOpen },
+   { to: '/rooms', label: 'Phòng', icon: DoorOpen },
+   { to: '/price-templates', label: 'Bảng giá', icon: Tags },
    { to: '/tenants', label: 'Khách thuê', icon: Users },
    { to: '/contracts', label: 'Hợp đồng', icon: FileText },
    { to: '/invoices', label: 'Hóa đơn', icon: Receipt },

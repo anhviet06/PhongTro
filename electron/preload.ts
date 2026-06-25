@@ -58,6 +58,14 @@ contextBridge.exposeInMainWorld('api', {
       countByStatus: () => invoke('rooms:count-by-status'),
    },
 
+   priceTemplates: {
+      list: () => invoke('price-templates:list'),
+      get: (id: number) => invoke('price-templates:get', id),
+      create: (data: unknown) => invoke('price-templates:create', data),
+      update: (id: number, patch: unknown) => invoke('price-templates:update', id, patch),
+      delete: (id: number) => invoke('price-templates:delete', id),
+   },
+
    services: {
       listActive: () => invoke('services:list-active'),
       listAll: () => invoke('services:list-all'),
@@ -123,6 +131,7 @@ contextBridge.exposeInMainWorld('api', {
          invoke('invoices:create', invoice, services),
       update: (id: number, patch: unknown) => invoke('invoices:update', id, patch),
       recalcStatus: (id: number) => invoke('invoices:recalc-status', id),
+      delete: (id: number) => invoke('invoices:delete', id),
    },
 
    payments: {

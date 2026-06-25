@@ -137,7 +137,7 @@ export async function exportInvoicePdf(invoiceId: number, savePath?: string) {
          return invoice.period;
       })();
 
-      const address = settings.landlord_address || '318/99/4 Đê La Thành';
+      const address = settings.landlord_address || 'Số 4 Ngách 99 Ngõ 318 Đê La Thành';
 
       // Lookup services
       const findService = (keywords: string[]) => {

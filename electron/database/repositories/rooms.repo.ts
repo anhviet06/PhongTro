@@ -15,6 +15,7 @@ export interface RoomInput {
    water_unit_price?: number;
    max_people?: number;
    status?: RoomStatus;
+   price_template_id?: number | null;
 }
 
 export type RoomPatch = Partial<RoomInput>;
@@ -75,11 +76,11 @@ export function create(data: RoomInput): RoomWithArea {
          `
          INSERT INTO rooms (
             area_id, name, floor, area_m2, price,
-            electric_unit_price, water_unit_price, max_people, status
+            electric_unit_price, water_unit_price, max_people, status, price_template_id
          )
          VALUES (
             @area_id, @name, @floor, @area_m2, @price,
-            @electric_unit_price, @water_unit_price, @max_people, @status
+            @electric_unit_price, @water_unit_price, @max_people, @status, @price_template_id
          )
       `
       )
@@ -93,6 +94,7 @@ export function create(data: RoomInput): RoomWithArea {
          water_unit_price: data.water_unit_price ?? 0,
          max_people: data.max_people ?? 4,
          status: data.status ?? 'vacant',
+         price_template_id: data.price_template_id ?? null,
       });
 
    const room = getById(Number(result.lastInsertRowid));
@@ -102,7 +104,7 @@ export function create(data: RoomInput): RoomWithArea {
 
 export function update(id: number, patch: RoomPatch): RoomWithArea | null {
    const fields: string[] = [];
-   const params: Record<string, number | string> = { id };
+   const params: Record<string, number | string | null> = { id };
    const keys = [
       'area_id',
       'name',
@@ -113,12 +115,13 @@ export function update(id: number, patch: RoomPatch): RoomWithArea | null {
       'water_unit_price',
       'max_people',
       'status',
+      'price_template_id',
    ] as const;
 
    for (const key of keys) {
       if (patch[key] !== undefined) {
          fields.push(`${key} = @${key}`);
-         params[key] = patch[key] as number | string;
+         params[key] = patch[key];
       }
    }
 

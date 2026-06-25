@@ -77,6 +77,7 @@ export default function Invoices() {
    const [filter, setFilter] = useState<InvoiceStatus | 'all'>('all');
    const [detailInvoice, setDetailInvoice] = useState<InvoiceWithDetails | null>(null);
    const [notifyInvoice, setNotifyInvoice] = useState<InvoiceWithDetails | null>(null);
+   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
    const loadData = async () => {
       setState((current) => ({ ...current, loading: true, error: null }));
@@ -116,7 +117,7 @@ export default function Invoices() {
 
    useEffect(() => {
       loadData();
-   }, [period]);
+   }, [period, refreshTrigger]);
 
    useEffect(() => {
       if (!selectedRoomId) return;
@@ -143,7 +144,7 @@ export default function Invoices() {
       return () => {
          alive = false;
       };
-   }, [period, selectedRoomId]);
+   }, [period, selectedRoomId, refreshTrigger]);
 
    useEffect(() => {
       if (!selectedRoomId) {
@@ -174,22 +175,40 @@ export default function Invoices() {
       return () => window.clearTimeout(timeout);
    }, [electricEnd, electricStart, period, selectedRoomId, waterEnd, waterStart]);
 
-   const selectedRoom = useMemo(
-      () => state.rooms.find((room) => room.id === selectedRoomId) ?? null,
-      [selectedRoomId, state.rooms]
-   );
+   // const selectedRoom = useMemo(
+   //    () => state.rooms.find((room) => room.id === selectedRoomId) ?? null,
+   //    [selectedRoomId, state.rooms]
+   // );
 
    const createInvoice = async () => {
       if (!selectedRoomId || !preview) return;
-      await window.api.billing.createInvoice({
-         room_id: selectedRoomId,
-         period,
-         electric_start: electricStart,
-         electric_end: electricEnd,
-         water_start: waterStart,
-         water_end: waterEnd,
-      });
-      await loadData();
+      try {
+         await window.api.billing.createInvoice({
+            room_id: selectedRoomId,
+            period,
+            electric_start: electricStart,
+            electric_end: electricEnd,
+            water_start: waterStart,
+            water_end: waterEnd,
+         });
+         setRefreshTrigger((prev) => prev + 1);
+      } catch (error) {
+         alert(`Tạo hóa đơn thất bại: ${error instanceof Error ? error.message : String(error)}`);
+      }
+   };
+
+   const deleteInvoice = async (invoice: InvoiceWithDetails) => {
+      const ok = window.confirm(
+         `Xóa hóa đơn phòng ${invoice.room_name} kỳ ${invoice.period}?\n` +
+            `Chỉ số điện nước đã chốt của kỳ này cũng sẽ bị xóa để bạn có thể ghi lại chỉ số mới.`
+      );
+      if (!ok) return;
+      try {
+         await window.api.invoices.delete(invoice.id);
+         setRefreshTrigger((prev) => prev + 1);
+      } catch (error) {
+         alert(`Xóa hóa đơn thất bại: ${error instanceof Error ? error.message : String(error)}`);
+      }
    };
 
    const exportInvoicePdf = async (invoice: InvoiceWithDetails) => {
@@ -402,6 +421,7 @@ export default function Invoices() {
             onNotify={setNotifyInvoice}
             onExportPdf={exportInvoicePdf}
             onExportExcel={exportInvoiceExcel}
+            onDelete={deleteInvoice}
          />
 
          <InvoiceDetailModal

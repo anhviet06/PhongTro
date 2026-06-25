@@ -3,6 +3,7 @@
  */
 
 import { getDb } from '../index';
+import * as roomsRepo from './rooms.repo';
 import type {
    Invoice,
    InvoiceService,
@@ -212,3 +213,33 @@ export function recalcStatus(invoiceId: number): InvoiceWithDetails | null {
 
    return getById(invoiceId);
 }
+
+export function deleteById(id: number): boolean {
+   const db = getDb();
+   const invoice = getById(id);
+   if (!invoice) return false;
+
+   if (invoice.status === 'paid') {
+      throw new Error('Không thể xóa hóa đơn đã thanh toán đầy đủ');
+   }
+
+   const trx = db.transaction(() => {
+      // 1. Xóa hóa đơn (ON DELETE CASCADE sẽ tự động xóa invoice_services và payments nếu có)
+      db.prepare('DELETE FROM invoices WHERE id = ?').run(id);
+
+      // 2. Xóa meter_readings để cho phép chốt lại chỉ số mới cho cùng kỳ
+      db.prepare('DELETE FROM meter_readings WHERE room_id = ? AND period = ?').run(
+         invoice.room_id,
+         invoice.period
+      );
+   });
+
+   trx();
+
+   // 3. Tính toán lại trạng thái phòng
+   roomsRepo.recomputeStatus(invoice.room_id);
+
+   return true;
+}
+
+export { deleteById as delete };

@@ -19,6 +19,7 @@ import * as invoicesRepo from './database/repositories/invoices.repo';
 import * as paymentsRepo from './database/repositories/payments.repo';
 import * as settingsRepo from './database/repositories/settings.repo';
 import * as statsRepo from './database/repositories/stats.repo';
+import * as priceTemplatesRepo from './database/repositories/price-templates.repo';
 import * as billingService from './services/billing';
 import * as contractGenService from './services/contract-gen';
 import * as excelExportService from './services/excel-export';
@@ -144,6 +145,13 @@ function registerIpcHandlers(): void {
    handle('rooms:update-status', (_, id, status) => roomsRepo.updateStatus(id, status));
    handle('rooms:count-by-status', () => roomsRepo.countByStatus());
 
+   // Price Templates
+   handle('price-templates:list', () => priceTemplatesRepo.listAll());
+   handle('price-templates:get', (_, id) => priceTemplatesRepo.getById(id));
+   handle('price-templates:create', (_, data) => priceTemplatesRepo.create(data));
+   handle('price-templates:update', (_, id, patch) => priceTemplatesRepo.update(id, patch));
+   handle('price-templates:delete', (_, id) => priceTemplatesRepo.deleteById(id));
+
    // Services
    handle('services:list-active', () => servicesRepo.listActive());
    handle('services:list-all', () => servicesRepo.listAll());
@@ -204,6 +212,7 @@ function registerIpcHandlers(): void {
    handle('invoices:create', (_, invoice, services) => invoicesRepo.create(invoice, services));
    handle('invoices:update', (_, id, patch) => invoicesRepo.update(id, patch));
    handle('invoices:recalc-status', (_, id) => invoicesRepo.recalcStatus(id));
+   handle('invoices:delete', (_, id) => invoicesRepo.deleteById(id));
 
    // Payments
    handle('payments:list-by-invoice', (_, invoiceId) => paymentsRepo.listByInvoice(invoiceId));
